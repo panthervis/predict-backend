@@ -1,21 +1,28 @@
-import graphene
-from fastapi import FastAPI
-from starlette.graphql import GraphQLApp
-
-class Query(graphene.ObjectType):
-    # Define a Field 'hello' in our Schema with a single Argument 'name'
-    hello = graphene.String(name=graphene.String(default_value="stranger"))
-
-    # Resolver method takes GraphQL context (root/self/parent, info) as well as
-    # Argument (name) for the Field and returns data for the query Response
-    # Type hints: For instance methods, omit type for "self"
-    # JS/Prisma equivalent: (obj/parent, args, context, info)
-    async def resolve_hello(self, info, name):
-        # We can make asynchronous network calls here
-        return f"Hello {name}"
+from exchange_client_factory import create_exchange_client
+from csv_exporter import export_to_csv
 
 
-schema = graphene.Schema(query=Query)
+# Example usage
+api_key_binance = 'uuaSIO0YJkUa6aPxusijUh4AxNwlKpDKOuOZEJdRIHsHEiUUA0JpYICDS3ySoQTh'
+secret_key_binance = '6OIKo6fTbDX9rU1RQrswjbp8376jGVmbm2O5xUbHpQA14faJQYXDqlrQPhCiALtk'
+api_key_uniswap = 'BQYTgWKfABe75fiX64pZhVWc41R4QPio'
+secret_key_uniswap = 'ory_at_9bJN9x4ERl4lcDON0irL68IxSY-fYblUStq9ANEw968.D1HcxxXj32f0ufjSjAQZTLTRtF-HZzKMBY7ZpNGcK2Q'
 
-app = FastAPI()
-app.add_route("/", GraphQLApp(schema=schema))
+# Create Binance client
+binance_client = create_exchange_client('binance', api_key_binance, secret_key_binance)
+symbol_binance = 'BTCUSDT'
+interval_binance = '1h'
+candlestick_data_binance = binance_client.get_candlestick_data(symbol_binance, interval_binance)
+
+# Export to CSV
+export_to_csv(candlestick_data_binance, f'{symbol_binance}_candlesticks_binance.csv')
+
+# Create Uniswap client
+uniswap_client = create_exchange_client('uniswap', api_key_uniswap, secret_key_uniswap)
+base_currency_uniswap = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"
+quote_currency_uniswap = "0xdAC17F958D2ee523a2206206994597C13D831ec7"
+time_interval_uniswap = 5
+candlestick_data_uniswap = uniswap_client.get_candlestick_data(base_currency_uniswap, quote_currency_uniswap, time_interval_uniswap)
+
+# Export to CSV
+export_to_csv(candlestick_data_uniswap, 'candlestick_data_uniswap.csv')
